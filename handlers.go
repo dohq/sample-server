@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"go.elastic.co/ecszap"
@@ -18,7 +19,8 @@ type Handler struct {
 
 // Result is json response struct.
 type Result struct {
-	Result string `json:"result"`
+	Result string            `json:"result"`
+	Envs   map[string]string `json:"envs,omitempty"`
 }
 
 // NewHandler is make new handler.
@@ -99,4 +101,19 @@ func (h *Handler) GetRemoteIP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 	h.Logger.Info(addr, zap.Int("status", http.StatusOK))
+}
+
+// GetEnv is return remote ip include X-Forwarded-For
+func (h *Handler) GetEnv(w http.ResponseWriter, r *http.Request) {
+	envs := os.Environ()
+	m := make(map[string]string)
+	for _, i := range envs {
+		e := strings.Split(i, "=")
+		m[e[0]] = e[1]
+	}
+
+	result := Result{Result: "ok", Envs: m}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+	h.Logger.Info("ok", zap.Int("count", len(envs)))
 }
