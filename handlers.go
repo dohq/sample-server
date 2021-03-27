@@ -17,12 +17,6 @@ type Handler struct {
 	Logger *zap.Logger
 }
 
-// Result is json response struct.
-type Result struct {
-	Result string            `json:"result"`
-	Envs   map[string]string `json:"envs,omitempty"`
-}
-
 // NewHandler is make new handler.
 func NewHandler(ws *os.File, loglevel zapcore.LevelEnabler) *Handler {
 	ec := ecszap.EncoderConfig{
