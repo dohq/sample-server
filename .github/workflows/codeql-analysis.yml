@@ -12,7 +12,6 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
-    if: github.repository == 'dohq/dockerhub_ratelimit_exporter'
 
     strategy:
       fail-fast: false
