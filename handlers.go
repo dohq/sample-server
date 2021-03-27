@@ -20,7 +20,7 @@ type Handler struct {
 // NewHandler is make new handler.
 func NewHandler(ws *os.File, loglevel zapcore.LevelEnabler) *Handler {
 	ec := ecszap.EncoderConfig{
-		EnableName:       true,
+		EnableName:       false,
 		EnableStackTrace: true,
 		EnableCaller:     false,
 		EncodeName:       zapcore.FullNameEncoder,
@@ -40,10 +40,9 @@ func NewHandler(ws *os.File, loglevel zapcore.LevelEnabler) *Handler {
 
 // GetStatus is A simple endpoint that just returns 200.
 func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
-	result := Result{Result: "ok"}
+	result := Result{Message: "ok"}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	writeResponse(w, result, http.StatusOK)
 	h.Logger.Info("ok", zap.Int("status", http.StatusOK))
 }
 
@@ -51,9 +50,8 @@ func (h *Handler) GetStatus(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetTime(w http.ResponseWriter, r *http.Request) {
 	now := time.Now().String()
 
-	result := Result{Result: now}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	result := Result{Message: now}
+	writeResponse(w, result, http.StatusOK)
 	h.Logger.Info(now, zap.Int("status", http.StatusOK))
 }
 
@@ -62,21 +60,23 @@ func (h *Handler) GetSleep(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("d")
 
 	if q == "" {
-		http.Error(w, "duration is blank", http.StatusInternalServerError)
+		result := Result{Message: "duration is blank"}
+		writeResponse(w, result, http.StatusInternalServerError)
 		h.Logger.Warn("duration is blank", zap.Int("status", http.StatusInternalServerError))
 		return
 	}
 
 	dur, err := time.ParseDuration(q)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		h.Logger.Warn(q, zap.Int("status", http.StatusInternalServerError))
+		result := Result{Message: "could not parse query"}
+		writeResponse(w, result, http.StatusInternalServerError)
+		h.Logger.Warn(err.Error(), zap.Int("status", http.StatusInternalServerError))
 		return
 	}
 
 	time.Sleep(dur)
 
-	result := Result{Result: q}
+	result := Result{Message: q}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 	h.Logger.Info(q, zap.Int("status", http.StatusOK))
@@ -91,7 +91,7 @@ func (h *Handler) GetRemoteIP(w http.ResponseWriter, r *http.Request) {
 		addr = xf
 	}
 
-	result := Result{Result: addr}
+	result := Result{Message: addr}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 	h.Logger.Info(addr, zap.Int("status", http.StatusOK))
@@ -100,14 +100,21 @@ func (h *Handler) GetRemoteIP(w http.ResponseWriter, r *http.Request) {
 // GetEnv is return remote ip include X-Forwarded-For
 func (h *Handler) GetEnv(w http.ResponseWriter, r *http.Request) {
 	envs := os.Environ()
+
 	m := make(map[string]string)
 	for _, i := range envs {
 		e := strings.Split(i, "=")
 		m[e[0]] = e[1]
 	}
 
-	result := Result{Result: "ok", Envs: m}
+	result := Result{Message: "ok", Envs: m}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 	h.Logger.Info("ok", zap.Int("count", len(envs)))
+}
+
+func writeResponse(w http.ResponseWriter, result Result, statusCode int) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(result)
 }

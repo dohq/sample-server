@@ -16,6 +16,7 @@ var username = flag.String("username", "", "Basic Auth Username")
 var password = flag.String("password", "", "Basic Auth Passowrd")
 
 func main() {
+	// parse environment variable args.
 	flag.VisitAll(func(f *flag.Flag) {
 		if s := os.Getenv(strings.ToUpper(f.Name)); s != "" {
 			f.Value.Set(s)
