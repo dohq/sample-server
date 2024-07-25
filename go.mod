@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	github.com/prometheus/client_golang v1.17.0
-	go.elastic.co/ecszap v1.0.2
-	go.uber.org/zap v1.26.0
+	go.elastic.co/ecszap v1.0.3
+	go.uber.org/zap v1.27.0
 )
 
 require (
